@@ -1,16 +1,17 @@
 package com.actionbarsherlock.app;
 
 import android.app.Activity;
-import android.support.v4.app._ActionBarSherlockTrojanHorse.OnCreateOptionsMenuListener;
-import android.support.v4.app._ActionBarSherlockTrojanHorse.OnOptionsItemSelectedListener;
-import android.support.v4.app._ActionBarSherlockTrojanHorse.OnPrepareOptionsMenuListener;
-
+import android.support.v4.app.Fragment;
 import com.actionbarsherlock.internal.view.menu.MenuItemWrapper;
 import com.actionbarsherlock.internal.view.menu.MenuWrapper;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.google.android.gms.maps.SupportMapFragment;
+
+import static android.support.v4.app.Watson.OnCreateOptionsMenuListener;
+import static android.support.v4.app.Watson.OnOptionsItemSelectedListener;
+import static android.support.v4.app.Watson.OnPrepareOptionsMenuListener;
 
 public class SherlockMapFragment extends SupportMapFragment implements OnCreateOptionsMenuListener, OnPrepareOptionsMenuListener, OnOptionsItemSelectedListener {
     private SherlockFragmentActivity mActivity;
