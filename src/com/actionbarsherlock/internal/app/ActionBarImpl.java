@@ -16,8 +16,11 @@
 
 package com.actionbarsherlock.internal.app;
 
+import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -25,7 +28,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.util.TypedValue;
@@ -35,13 +37,14 @@ import android.view.View;
 import android.view.Window;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.SpinnerAdapter;
+
 import com.actionbarsherlock.R;
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.internal.nineoldandroids.animation.Animator;
+import com.actionbarsherlock.internal.nineoldandroids.animation.Animator.AnimatorListener;
 import com.actionbarsherlock.internal.nineoldandroids.animation.AnimatorListenerAdapter;
 import com.actionbarsherlock.internal.nineoldandroids.animation.AnimatorSet;
 import com.actionbarsherlock.internal.nineoldandroids.animation.ObjectAnimator;
-import com.actionbarsherlock.internal.nineoldandroids.animation.Animator.AnimatorListener;
 import com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout;
 import com.actionbarsherlock.internal.view.menu.MenuBuilder;
 import com.actionbarsherlock.internal.view.menu.MenuPopupHelper;
@@ -54,7 +57,6 @@ import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
 
 /**
  * ActionBarImpl is the ActionBar implementation used
@@ -98,9 +100,6 @@ public class ActionBarImpl extends ActionBar {
 
     private int mContextDisplayMode;
     private boolean mHasEmbeddedTabs;
-
-    final Handler mHandler = new Handler();
-    Runnable mTabSelector;
 
     private Animator mCurrentShowAnim;
     private Animator mCurrentModeAnim;
@@ -182,8 +181,18 @@ public class ActionBarImpl extends ActionBar {
     }
 
     public void onConfigurationChanged(Configuration newConfig) {
-        setHasEmbeddedTabs(getResources_getBoolean(mContext,
-                R.bool.abs__action_bar_embed_tabs));
+        mActionView.setEmbeddedTabView(null);
+        mContainerView.setTabContainer(null);
+
+        mHasEmbeddedTabs = getResources_getBoolean(mContext, R.bool.abs__action_bar_embed_tabs);
+        final boolean isInTabMode = getNavigationMode() == NAVIGATION_MODE_TABS;
+        if (mTabScrollView != null) {
+            mTabScrollView.setVisibility(isInTabMode ? View.VISIBLE : View.GONE);
+        }
+        mActionView.setCollapsable(!mHasEmbeddedTabs && isInTabMode);
+        
+//    	setHasEmbeddedTabs(getResources_getBoolean(mContext,
+//                R.bool.abs__action_bar_embed_tabs));
 
         //Manually dispatch a configuration change to the action bar view on pre-2.2
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
@@ -192,6 +201,35 @@ public class ActionBarImpl extends ActionBar {
                 mContextView.onConfigurationChanged(newConfig);
             }
         }
+        
+        recreateTabs();
+    }
+
+    private void recreateTabs() {
+        if(mTabScrollView == null) {
+            return;
+        }
+        
+        ArrayList<TabImpl> tabs = new ArrayList<TabImpl>(mTabs);
+        int tabPosition = getSelectedNavigationIndex();
+
+        mTabs.clear();
+        if (mTabScrollView != null) {
+            mTabScrollView.removeAllTabs();
+        }
+       
+        mTabScrollView.onDetachedFromWindow();
+        mTabScrollView = null;
+        ensureTabsExist();
+        mTabScrollView.setTabSelected(tabPosition);
+        for(ActionBar.Tab tab : tabs) {
+            addTab(tab, false);
+        }
+        
+        if(tabPosition != INVALID_POSITION) {
+            mTabScrollView.clickTab(tabPosition);
+        }
+        mTabScrollView.forceLayout();
     }
 
     private void setHasEmbeddedTabs(boolean hasEmbeddedTabs) {

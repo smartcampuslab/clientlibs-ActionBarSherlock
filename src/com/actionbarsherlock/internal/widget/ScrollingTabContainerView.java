@@ -23,6 +23,7 @@ import android.text.TextUtils.TruncateAt;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -361,6 +362,10 @@ public class ScrollingTabContainerView extends NineHorizontalScrollView
     public void onNothingSelected(IcsAdapterView<?> parent) {
     }
 
+    public void clickTab(int position) {
+    	mTabClickListener.onClick(mTabLayout.getChildAt(position));
+    }
+    
     public static class TabView extends LinearLayout {
         private ScrollingTabContainerView mParent;
         private ActionBar.Tab mTab;
@@ -368,7 +373,18 @@ public class ScrollingTabContainerView extends NineHorizontalScrollView
         private ImageView mIconView;
         private View mCustomView;
 
-        public TabView(Context context, AttributeSet attrs) {
+        
+        
+        @Override
+		public boolean onTouchEvent(MotionEvent event) {
+        	if (!mParent.isCollapsed()) {
+            	mParent.mTabClickListener.onClick(this);
+            	return true;
+        	}
+        	return super.onTouchEvent(event);
+		}
+
+		public TabView(Context context, AttributeSet attrs) {
             //TODO super(context, null, R.attr.actionBarTabStyle);
             super(context, attrs);
         }
